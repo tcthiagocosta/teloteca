@@ -48,6 +48,7 @@ function AddTitlePage() {
       if (!response.ok) throw new Error("Não foi possível consultar a TMDB.");
 
       const data = await response.json();
+      console.log("Resultado da consulta TMDB:", data);
       setResults(
         data.results.filter((item) =>
           ["movie", "tv"].includes(item.media_type),
@@ -101,8 +102,9 @@ function AddTitlePage() {
             <h2>Resultados encontrados</h2>
             <div className="tmdb-results-grid">
               {results.map((result) => (
-                <article
+                <a
                   className="tmdb-result"
+                  href={`#tmdb/${result.media_type}/${result.id}`}
                   key={`${result.media_type}-${result.id}`}
                 >
                   {result.poster_path ? (
@@ -120,7 +122,7 @@ function AddTitlePage() {
                     </p>
                     <h3>{getTitle(result)}</h3>
                   </div>
-                </article>
+                </a>
               ))}
             </div>
           </section>
