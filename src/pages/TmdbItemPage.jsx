@@ -17,6 +17,46 @@ function getTmdbItemReleaseYear(tmdbItemDetails, tmdbMediaType) {
   return itemReleaseDate ? itemReleaseDate.slice(0, 4) : "Ano não informado";
 }
 
+async function loadAllSeriesEpisodes(seriesIdentifier, seriesSeasons) {
+  const seasonsWithEpisodes = await Promise.all(
+    seriesSeasons
+      .filter((seasonDetails) => seasonDetails.season_number > 0)
+      .map(async (seasonDetails) => {
+        const tmdbSeasonRequestParameters = new URLSearchParams({
+          api_key: TMDB_API_ACCESS_KEY,
+          language: "pt-BR",
+        });
+        const tmdbSeasonResponse = await fetch(
+          `https://api.themoviedb.org/3/tv/${seriesIdentifier}/season/${seasonDetails.season_number}?${tmdbSeasonRequestParameters}`,
+        );
+        if (!tmdbSeasonResponse.ok) {
+          throw new Error(`Não foi possível carregar a temporada ${seasonDetails.season_number}.`);
+        }
+        const seasonResponseData = await tmdbSeasonResponse.json();
+        return {
+          seasonDetails,
+          episodes: seasonResponseData.episodes || [],
+        };
+      }),
+  );
+
+  return {
+    seasons: seasonsWithEpisodes.map(({ seasonDetails }) => ({
+      tmdb_id: seasonDetails.id,
+      season_number: seasonDetails.season_number,
+      name: seasonDetails.name,
+    })),
+    episodes: seasonsWithEpisodes.flatMap(({ seasonDetails, episodes }) =>
+      episodes.map((episodeDetails) => ({
+        season_number: seasonDetails.season_number,
+        tmdb_id: episodeDetails.id,
+        episode_number: episodeDetails.episode_number,
+        name: episodeDetails.name,
+      })),
+    ),
+  };
+}
+
 function SeasonAccordion({ seriesIdentifier, seasonDetails }) {
   const [seasonEpisodes, setSeasonEpisodes] = useState(null);
   const [episodeLoadingErrorMessage, setEpisodeLoadingErrorMessage] = useState("");
@@ -124,7 +164,6 @@ function TmdbItemPage({ tmdbMediaType, tmdbItemIdentifier }) {
         }
 
         const tmdbItemResponseData = await tmdbItemResponse.json();
-        console.log("TMDB item details:", tmdbItemResponseData);
         setTmdbItemDetails(tmdbItemResponseData);
       } catch (itemRequestError) {
         setItemLoadingErrorMessage(
@@ -143,11 +182,17 @@ function TmdbItemPage({ tmdbMediaType, tmdbItemIdentifier }) {
     setLibraryActionMessage("");
 
     try {
+      const seriesData = tmdbMediaType === "tv"
+        ? await loadAllSeriesEpisodes(tmdbItemDetails.id, tmdbItemDetails.seasons || [])
+        : { seasons: [], episodes: [] };
       const { wasCreated } = await addTmdbItemToLibrary({
         tmdbItemIdentifier: Number(tmdbItemIdentifier),
         tmdbMediaType,
         tmdbItemTitle: getTmdbItemDisplayTitle(tmdbItemDetails, tmdbMediaType),
         tmdbPosterPath: tmdbItemDetails.poster_path,
+        tmdbItemDescription: tmdbItemDetails.overview || null,
+        tmdbSeasons: seriesData.seasons,
+        tmdbEpisodes: seriesData.episodes,
       });
       setLibraryActionMessage(
         wasCreated ? "Título adicionado à coleção." : "Este título já está na coleção.",

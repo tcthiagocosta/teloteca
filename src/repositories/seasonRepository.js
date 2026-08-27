@@ -54,6 +54,15 @@ export const seasonRepository = {
     return updatedSeasonRow;
   },
 
+  /** @param {number} mediaIdentifier @returns {Promise<void>} */
+  async removeByMediaId(mediaIdentifier) {
+    const { error: supabaseError } = await supabaseClient
+      .from("seasons")
+      .delete()
+      .eq("media_id", mediaIdentifier);
+    throwIfSupabaseError(supabaseError);
+  },
+
   /** @param {number} seasonIdentifier @returns {Promise<void>} */
   async remove(seasonIdentifier) {
     const { error: supabaseError } = await supabaseClient

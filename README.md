@@ -10,7 +10,7 @@ npm run dev
 ```
 
 O projeto usa JavaScript, ESLint, CSS e Supabase para persistência. A autenticação
-e outras funcionalidades do catálogo serão adicionadas em etapas futuras.
+é feita pelo Supabase Auth.
 
 ## Supabase
 
@@ -37,6 +37,14 @@ const savedMedia = await mediaRepository.create({
 O schema precisa disponibilizar as tabelas `media`, `seasons` e `episodes` pela
 Data API e ter políticas RLS que permitam as operações necessárias para a chave
 anônima utilizada pelo aplicativo.
+
+Execute o conteúdo de `supabase/policies.sql` no SQL Editor do projeto Supabase.
+As policies permitem as operações da tabela `media` somente para usuários
+autenticados. O login é feito pela tela inicial usando
+`supabase.auth.signInWithPassword`; não armazene credenciais em arquivos do
+frontend. A função `add_tv_to_library` incluída nesse arquivo é usada para
+adicionar uma série, suas temporadas e seus episódios em uma única operação
+transacional.
 
 ## Scripts
 

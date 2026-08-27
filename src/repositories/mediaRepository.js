@@ -54,6 +54,25 @@ export const mediaRepository = {
     return createdMediaRow;
   },
 
+  /**
+   * @param {MediaInsert} mediaToCreate
+   * @param {object[]} seasonsToCreate
+   * @param {object[]} episodesToCreate
+   * @returns {Promise<Media>}
+   */
+  async createSeries(mediaToCreate, seasonsToCreate, episodesToCreate) {
+    const { data: createdMediaRow, error: supabaseError } = await supabaseClient.rpc(
+      "add_tv_to_library",
+      {
+        p_media: mediaToCreate,
+        p_seasons: seasonsToCreate,
+        p_episodes: episodesToCreate,
+      },
+    );
+    throwIfSupabaseError(supabaseError);
+    return createdMediaRow;
+  },
+
   /** @param {number} mediaIdentifier @param {MediaUpdate} mediaChanges @returns {Promise<Media>} */
   async update(mediaIdentifier, mediaChanges) {
     const { data: updatedMediaRow, error: supabaseError } = await supabaseClient

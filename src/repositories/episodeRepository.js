@@ -54,6 +54,15 @@ export const episodeRepository = {
     return updatedEpisodeRow;
   },
 
+  /** @param {number} seasonIdentifier @returns {Promise<void>} */
+  async removeBySeasonId(seasonIdentifier) {
+    const { error: supabaseError } = await supabaseClient
+      .from("episodes")
+      .delete()
+      .eq("season_id", seasonIdentifier);
+    throwIfSupabaseError(supabaseError);
+  },
+
   /** @param {number} episodeIdentifier @returns {Promise<void>} */
   async remove(episodeIdentifier) {
     const { error: supabaseError } = await supabaseClient

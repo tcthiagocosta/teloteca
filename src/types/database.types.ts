@@ -11,6 +11,7 @@ export interface Database {
           type: MediaType;
           title: string;
           poster_path: string | null;
+          description: string | null;
           status: MediaStatus;
           rating: number | null;
           notes: string | null;
@@ -22,6 +23,7 @@ export interface Database {
           type: MediaType;
           title: string;
           poster_path?: string | null;
+          description?: string | null;
           status?: MediaStatus;
           rating?: number | null;
           notes?: string | null;
@@ -33,6 +35,7 @@ export interface Database {
           type?: MediaType;
           title?: string;
           poster_path?: string | null;
+          description?: string | null;
           status?: MediaStatus;
           rating?: number | null;
           notes?: string | null;

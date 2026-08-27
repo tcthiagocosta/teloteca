@@ -9,6 +9,9 @@ export async function addTmdbItemToLibrary({
   tmdbMediaType,
   tmdbItemTitle,
   tmdbPosterPath,
+  tmdbItemDescription,
+  tmdbSeasons = [],
+  tmdbEpisodes = [],
 }) {
   const existingMedia = await mediaRepository.getByTmdbIdentifierAndType(
     tmdbItemIdentifier,
@@ -19,12 +22,16 @@ export async function addTmdbItemToLibrary({
     return { media: existingMedia, wasCreated: false };
   }
 
-  const createdMedia = await mediaRepository.create({
+  const mediaToCreate = {
     tmdb_id: tmdbItemIdentifier,
     type: tmdbMediaType,
     title: tmdbItemTitle,
     poster_path: tmdbPosterPath,
-  });
+    description: tmdbItemDescription,
+  };
+  const createdMedia = tmdbMediaType === "tv"
+    ? await mediaRepository.createSeries(mediaToCreate, tmdbSeasons, tmdbEpisodes)
+    : await mediaRepository.create(mediaToCreate);
 
   return { media: createdMedia, wasCreated: true };
 }
