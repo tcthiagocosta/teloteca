@@ -1,66 +1,67 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar.jsx";
-import { TMDB_API_KEY } from "../config/tmdb.js";
+import { TMDB_API_ACCESS_KEY } from "../config/tmdb.js";
 
-const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/w342";
+const TMDB_POSTER_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w342";
 
-function getTitle(result) {
-  return result.title || result.name || "Título não informado";
+function getTmdbResultDisplayTitle(tmdbSearchResult) {
+  return tmdbSearchResult.title || tmdbSearchResult.name || "Título não informado";
 }
 
-function getReleaseYear(result) {
-  const releaseDate = result.release_date || result.first_air_date;
-  return releaseDate ? releaseDate.slice(0, 4) : "Ano não informado";
+function getTmdbResultReleaseYear(tmdbSearchResult) {
+  const titleReleaseDate =
+    tmdbSearchResult.release_date || tmdbSearchResult.first_air_date;
+  return titleReleaseDate ? titleReleaseDate.slice(0, 4) : "Ano não informado";
 }
 
 function AddTitlePage() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [searchQueryText, setSearchQueryText] = useState("");
+  const [tmdbSearchResults, setTmdbSearchResults] = useState([]);
+  const [isSearchRequestInProgress, setIsSearchRequestInProgress] = useState(false);
+  const [searchErrorMessage, setSearchErrorMessage] = useState("");
 
-  async function handleSearch(event) {
-    event.preventDefault();
-    if (!query.trim()) {
-      setError("Digite um título para pesquisar.");
+  async function handleTitleSearchFormSubmission(formSubmissionEvent) {
+    formSubmissionEvent.preventDefault();
+    if (!searchQueryText.trim()) {
+      setSearchErrorMessage("Digite um título para pesquisar.");
       return;
     }
 
-    if (TMDB_API_KEY === "COLE_SUA_CHAVE_DA_TMDB_AQUI") {
-      setError("Configure a chave da TMDB no arquivo src/config/tmdb.js.");
+    if (TMDB_API_ACCESS_KEY === "COLE_SUA_CHAVE_DA_TMDB_AQUI") {
+      setSearchErrorMessage("Configure a chave da TMDB no arquivo src/config/tmdb.js.");
       return;
     }
 
-    setIsLoading(true);
-    setError("");
+    setIsSearchRequestInProgress(true);
+    setSearchErrorMessage("");
 
     try {
-      const params = new URLSearchParams({
-        api_key: TMDB_API_KEY,
+      const tmdbSearchRequestParameters = new URLSearchParams({
+        api_key: TMDB_API_ACCESS_KEY,
         language: "pt-BR",
-        query: query.trim(),
+        query: searchQueryText.trim(),
         include_adult: "false",
       });
-      const response = await fetch(
-        `https://api.themoviedb.org/3/search/multi?${params}`,
+      const tmdbSearchResponse = await fetch(
+        `https://api.themoviedb.org/3/search/multi?${tmdbSearchRequestParameters}`,
       );
 
-      if (!response.ok) throw new Error("Não foi possível consultar a TMDB.");
+      if (!tmdbSearchResponse.ok) throw new Error("Não foi possível consultar a TMDB.");
 
-      const data = await response.json();
-      console.log("Resultado da consulta TMDB:", data);
-      setResults(
-        data.results.filter((item) =>
-          ["movie", "tv"].includes(item.media_type),
+      const tmdbSearchResponseData = await tmdbSearchResponse.json();
+      console.log("TMDB search response:", tmdbSearchResponseData);
+      setTmdbSearchResults(
+        tmdbSearchResponseData.results.filter((tmdbSearchResult) =>
+          ["movie", "tv"].includes(tmdbSearchResult.media_type),
         ),
       );
-    } catch (requestError) {
-      setError(
-        requestError.message || "Ocorreu um erro ao realizar a consulta.",
+    } catch (tmdbSearchRequestError) {
+      setSearchErrorMessage(
+        tmdbSearchRequestError.message || "Ocorreu um erro ao realizar a consulta.",
       );
-      setResults([]);
+      setTmdbSearchResults([]);
     } finally {
-      setIsLoading(false);
+      setIsSearchRequestInProgress(false);
     }
   }
 
@@ -78,49 +79,49 @@ function AddTitlePage() {
             Pesquise filmes ou séries para encontrar um novo título para sua
             coleção.
           </p>
-          <form className="title-search-form" onSubmit={handleSearch}>
+          <form className="title-search-form" onSubmit={handleTitleSearchFormSubmission}>
             <input
               type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              value={searchQueryText}
+              onChange={(inputChangeEvent) => setSearchQueryText(inputChangeEvent.target.value)}
               placeholder="Ex.: Interestelar"
               aria-label="Título para pesquisar"
             />
-            <button type="submit" disabled={isLoading}>
-              {isLoading ? "Consultando..." : "Consultar"}
+            <button type="submit" disabled={isSearchRequestInProgress}>
+              {isSearchRequestInProgress ? "Consultando..." : "Consultar"}
             </button>
           </form>
-          {error && (
+          {searchErrorMessage && (
             <p className="search-message is-error" role="alert">
-              {error}
+              {searchErrorMessage}
             </p>
           )}
         </section>
 
-        {results.length > 0 && (
+        {tmdbSearchResults.length > 0 && (
           <section className="tmdb-results" aria-label="Resultados da pesquisa">
             <h2>Resultados encontrados</h2>
             <div className="tmdb-results-grid">
-              {results.map((result) => (
+              {tmdbSearchResults.map((tmdbSearchResult) => (
                 <a
                   className="tmdb-result"
-                  href={`#tmdb/${result.media_type}/${result.id}`}
-                  key={`${result.media_type}-${result.id}`}
+                  href={`#tmdb/${tmdbSearchResult.media_type}/${tmdbSearchResult.id}`}
+                  key={`${tmdbSearchResult.media_type}-${tmdbSearchResult.id}`}
                 >
-                  {result.poster_path ? (
+                  {tmdbSearchResult.poster_path ? (
                     <img
-                      src={`${TMDB_IMAGE_URL}${result.poster_path}`}
-                      alt={`Pôster de ${getTitle(result)}`}
+                      src={`${TMDB_POSTER_IMAGE_BASE_URL}${tmdbSearchResult.poster_path}`}
+                      alt={`Pôster de ${getTmdbResultDisplayTitle(tmdbSearchResult)}`}
                     />
                   ) : (
                     <div className="missing-poster">Sem pôster</div>
                   )}
                   <div>
                     <p>
-                      {result.media_type === "tv" ? "Série" : "Filme"} ·{" "}
-                      {getReleaseYear(result)}
+                      {tmdbSearchResult.media_type === "tv" ? "Série" : "Filme"} ·{" "}
+                      {getTmdbResultReleaseYear(tmdbSearchResult)}
                     </p>
-                    <h3>{getTitle(result)}</h3>
+                    <h3>{getTmdbResultDisplayTitle(tmdbSearchResult)}</h3>
                   </div>
                 </a>
               ))}

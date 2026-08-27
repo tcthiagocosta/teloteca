@@ -3,28 +3,43 @@ import HomePage from "./pages/HomePage.jsx";
 import AddTitlePage from "./pages/AddTitlePage.jsx";
 import MoviePage from "./pages/MoviePage.jsx";
 import TmdbItemPage from "./pages/TmdbItemPage.jsx";
-import { movies } from "./data/movies.js";
+import { libraryTitles } from "./data/movies.js";
 import "./App.css";
 
 function App() {
-  const [hash, setHash] = useState(() => window.location.hash);
+  const [currentLocationHash, setCurrentLocationHash] = useState(
+    () => window.location.hash,
+  );
 
   useEffect(() => {
-    const updateHash = () => setHash(window.location.hash);
-    window.addEventListener("hashchange", updateHash);
-    return () => window.removeEventListener("hashchange", updateHash);
+    const synchronizeLocationHash = () =>
+      setCurrentLocationHash(window.location.hash);
+    window.addEventListener("hashchange", synchronizeLocationHash);
+    return () =>
+      window.removeEventListener("hashchange", synchronizeLocationHash);
   }, []);
 
-  if (hash === "#add-title") return <AddTitlePage />;
+  if (currentLocationHash === "#add-title") return <AddTitlePage />;
 
-  const tmdbMatch = hash.match(/^#tmdb\/(movie|tv)\/(\d+)$/);
-  if (tmdbMatch) {
-    return <TmdbItemPage mediaType={tmdbMatch[1]} itemId={tmdbMatch[2]} />;
+  const tmdbRouteMatch = currentLocationHash.match(/^#tmdb\/(movie|tv)\/(\d+)$/);
+  if (tmdbRouteMatch) {
+    return (
+      <TmdbItemPage
+        tmdbMediaType={tmdbRouteMatch[1]}
+        tmdbItemIdentifier={tmdbRouteMatch[2]}
+      />
+    );
   }
 
-  const movieId = hash.replace("#movie/", "");
-  const movie = movies.find((item) => item.id === movieId);
-  return movie ? <MoviePage movie={movie} /> : <HomePage />;
+  const libraryTitleIdentifier = currentLocationHash.replace("#movie/", "");
+  const selectedLibraryTitle = libraryTitles.find(
+    (libraryTitle) => libraryTitle.titleIdentifier === libraryTitleIdentifier,
+  );
+  return selectedLibraryTitle ? (
+    <MoviePage libraryTitle={selectedLibraryTitle} />
+  ) : (
+    <HomePage />
+  );
 }
 
 export default App;

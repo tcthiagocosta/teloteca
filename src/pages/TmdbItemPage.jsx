@@ -1,65 +1,69 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar.jsx";
-import { TMDB_API_KEY } from "../config/tmdb.js";
+import { TMDB_API_ACCESS_KEY } from "../config/tmdb.js";
+import { addTmdbItemToLibrary } from "../services/libraryService.js";
 
-const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/w500";
+const TMDB_POSTER_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
-function getTitle(item, mediaType) {
-  return mediaType === "tv" ? item.name : item.title;
+function getTmdbItemDisplayTitle(tmdbItemDetails, tmdbMediaType) {
+  return tmdbMediaType === "tv" ? tmdbItemDetails.name : tmdbItemDetails.title;
 }
 
-function getYear(item, mediaType) {
-  const date = mediaType === "tv" ? item.first_air_date : item.release_date;
-  return date ? date.slice(0, 4) : "Ano não informado";
+function getTmdbItemReleaseYear(tmdbItemDetails, tmdbMediaType) {
+  const itemReleaseDate =
+    tmdbMediaType === "tv"
+      ? tmdbItemDetails.first_air_date
+      : tmdbItemDetails.release_date;
+  return itemReleaseDate ? itemReleaseDate.slice(0, 4) : "Ano não informado";
 }
 
-function SeasonAccordion({ seriesId, season }) {
-  const [episodes, setEpisodes] = useState(null);
-  const [error, setError] = useState("");
+function SeasonAccordion({ seriesIdentifier, seasonDetails }) {
+  const [seasonEpisodes, setSeasonEpisodes] = useState(null);
+  const [episodeLoadingErrorMessage, setEpisodeLoadingErrorMessage] = useState("");
 
-  async function loadEpisodes(event) {
-    if (!event.currentTarget.open || episodes) return;
+  async function loadSeasonEpisodes(detailsToggleEvent) {
+    if (!detailsToggleEvent.currentTarget.open || seasonEpisodes) return;
 
     try {
-      const params = new URLSearchParams({
-        api_key: TMDB_API_KEY,
+      const tmdbSeasonRequestParameters = new URLSearchParams({
+        api_key: TMDB_API_ACCESS_KEY,
         language: "pt-BR",
       });
-      const response = await fetch(
-        `https://api.themoviedb.org/3/tv/${seriesId}/season/${season.season_number}?${params}`,
+      const tmdbSeasonResponse = await fetch(
+        `https://api.themoviedb.org/3/tv/${seriesIdentifier}/season/${seasonDetails.season_number}?${tmdbSeasonRequestParameters}`,
       );
 
-      if (!response.ok)
+      if (!tmdbSeasonResponse.ok)
         throw new Error("Não foi possível carregar os episódios.");
 
-      const data = await response.json();
-      setEpisodes(data.episodes);
-    } catch (requestError) {
-      setError(
-        requestError.message || "Ocorreu um erro ao carregar os episódios.",
+      const tmdbSeasonResponseData = await tmdbSeasonResponse.json();
+      setSeasonEpisodes(tmdbSeasonResponseData.episodes);
+    } catch (seasonRequestError) {
+      setEpisodeLoadingErrorMessage(
+        seasonRequestError.message || "Ocorreu um erro ao carregar os episódios.",
       );
     }
   }
 
   return (
-    <details className="season-accordion" onToggle={loadEpisodes}>
+    <details className="season-accordion" onToggle={loadSeasonEpisodes}>
       <summary>
-        {season.poster_path ? (
+        {seasonDetails.poster_path ? (
           <img
-            src={`${TMDB_IMAGE_URL}${season.poster_path}`}
-            alt={`Pôster de ${season.name}`}
+            src={`${TMDB_POSTER_IMAGE_BASE_URL}${seasonDetails.poster_path}`}
+            alt={`Pôster de ${seasonDetails.name}`}
           />
         ) : (
           <div className="missing-poster">Sem pôster</div>
         )}
         <div className="season-summary-copy">
           <p>
-            Temporada {season.season_number} · {season.episode_count} episódios
+            Temporada {seasonDetails.season_number} · {seasonDetails.episode_count} episódios
           </p>
-          <h3>{season.name}</h3>
+          <h3>{seasonDetails.name}</h3>
           <span>
-            {season.air_date
-              ? season.air_date.slice(0, 4)
+            {seasonDetails.air_date
+              ? seasonDetails.air_date.slice(0, 4)
               : "Data não informada"}
           </span>
         </div>
@@ -68,17 +72,17 @@ function SeasonAccordion({ seriesId, season }) {
         </span>
       </summary>
       <div className="episodes-panel">
-        {!episodes && !error && <p>Carregando episódios...</p>}
-        {error && <p className="search-message is-error">{error}</p>}
-        {episodes && (
+        {!seasonEpisodes && !episodeLoadingErrorMessage && <p>Carregando episódios...</p>}
+        {episodeLoadingErrorMessage && <p className="search-message is-error">{episodeLoadingErrorMessage}</p>}
+        {seasonEpisodes && (
           <ol className="episodes-list">
-            {episodes.map((episode) => (
-              <li key={episode.id}>
-                <span>{String(episode.episode_number).padStart(2, "0")}</span>
-                <strong>{episode.name}</strong>
+            {seasonEpisodes.map((episodeDetails) => (
+              <li key={episodeDetails.id}>
+                <span>{String(episodeDetails.episode_number).padStart(2, "0")}</span>
+                <strong>{episodeDetails.name}</strong>
                 <time>
-                  {episode.runtime
-                    ? `${episode.runtime} min`
+                  {episodeDetails.runtime
+                    ? `${episodeDetails.runtime} min`
                     : "Duração não informada"}
                 </time>
               </li>
@@ -90,45 +94,72 @@ function SeasonAccordion({ seriesId, season }) {
   );
 }
 
-function TmdbItemPage({ mediaType, itemId }) {
-  const [item, setItem] = useState(null);
-  const [error, setError] = useState("");
+function TmdbItemPage({ tmdbMediaType, tmdbItemIdentifier }) {
+  const [tmdbItemDetails, setTmdbItemDetails] = useState(null);
+  const [itemLoadingErrorMessage, setItemLoadingErrorMessage] = useState("");
+  const [isAddingItemToLibrary, setIsAddingItemToLibrary] = useState(false);
+  const [libraryActionMessage, setLibraryActionMessage] = useState("");
 
   useEffect(() => {
-    async function loadItem() {
-      if (TMDB_API_KEY === "COLE_SUA_CHAVE_DA_TMDB_AQUI") {
-        setError("Configure a chave da TMDB no arquivo src/config/tmdb.js.");
+    async function loadTmdbItemDetails() {
+      if (TMDB_API_ACCESS_KEY === "COLE_SUA_CHAVE_DA_TMDB_AQUI") {
+        setItemLoadingErrorMessage("Configure a chave da TMDB no arquivo src/config/tmdb.js.");
         return;
       }
 
-      setItem(null);
-      setError("");
+      setTmdbItemDetails(null);
+      setItemLoadingErrorMessage("");
 
       try {
-        const params = new URLSearchParams({
-          api_key: TMDB_API_KEY,
+        const tmdbItemRequestParameters = new URLSearchParams({
+          api_key: TMDB_API_ACCESS_KEY,
           language: "pt-BR",
         });
-        const response = await fetch(
-          `https://api.themoviedb.org/3/${mediaType}/${itemId}?${params}`,
+        const tmdbItemResponse = await fetch(
+          `https://api.themoviedb.org/3/${tmdbMediaType}/${tmdbItemIdentifier}?${tmdbItemRequestParameters}`,
         );
 
-        if (!response.ok) {
+        if (!tmdbItemResponse.ok) {
           throw new Error("Não foi possível carregar este título.");
         }
 
-        const data = await response.json();
-        console.log("Detalhes do título TMDB:", data);
-        setItem(data);
-      } catch (requestError) {
-        setError(
-          requestError.message || "Ocorreu um erro ao carregar o título.",
+        const tmdbItemResponseData = await tmdbItemResponse.json();
+        console.log("TMDB item details:", tmdbItemResponseData);
+        setTmdbItemDetails(tmdbItemResponseData);
+      } catch (itemRequestError) {
+        setItemLoadingErrorMessage(
+          itemRequestError.message || "Ocorreu um erro ao carregar o título.",
         );
       }
     }
 
-    loadItem();
-  }, [itemId, mediaType]);
+    loadTmdbItemDetails();
+  }, [tmdbItemIdentifier, tmdbMediaType]);
+
+  async function handleAddItemToLibrary() {
+    if (!tmdbItemDetails) return;
+
+    setIsAddingItemToLibrary(true);
+    setLibraryActionMessage("");
+
+    try {
+      const { wasCreated } = await addTmdbItemToLibrary({
+        tmdbItemIdentifier: Number(tmdbItemIdentifier),
+        tmdbMediaType,
+        tmdbItemTitle: getTmdbItemDisplayTitle(tmdbItemDetails, tmdbMediaType),
+        tmdbPosterPath: tmdbItemDetails.poster_path,
+      });
+      setLibraryActionMessage(
+        wasCreated ? "Título adicionado à coleção." : "Este título já está na coleção.",
+      );
+    } catch (libraryRequestError) {
+      setLibraryActionMessage(
+        libraryRequestError.message || "Não foi possível adicionar o título.",
+      );
+    } finally {
+      setIsAddingItemToLibrary(false);
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -137,72 +168,87 @@ function TmdbItemPage({ mediaType, itemId }) {
         <a className="back-link" href="#add-title">
           ← Voltar para a pesquisa
         </a>
-        {error && (
+        {itemLoadingErrorMessage && (
           <p className="search-message is-error" role="alert">
-            {error}
+            {itemLoadingErrorMessage}
           </p>
         )}
-        {!item && !error && (
+        {!tmdbItemDetails && !itemLoadingErrorMessage && (
           <p className="loading-message">Carregando informações...</p>
         )}
-        {item && (
+        {tmdbItemDetails && (
           <>
             <article className="tmdb-detail">
-              {item.poster_path ? (
-                <img
-                  className="tmdb-detail-poster"
-                  src={`${TMDB_IMAGE_URL}${item.poster_path}`}
-                  alt={`Pôster de ${getTitle(item, mediaType)}`}
-                />
-              ) : (
-                <div className="tmdb-detail-poster missing-poster">
-                  Sem pôster
-                </div>
-              )}
+              <div className="tmdb-poster-action-panel">
+                {tmdbItemDetails.poster_path ? (
+                  <img
+                    className="tmdb-detail-poster"
+                    src={`${TMDB_POSTER_IMAGE_BASE_URL}${tmdbItemDetails.poster_path}`}
+                    alt={`Pôster de ${getTmdbItemDisplayTitle(tmdbItemDetails, tmdbMediaType)}`}
+                  />
+                ) : (
+                  <div className="tmdb-detail-poster missing-poster">
+                    Sem pôster
+                  </div>
+                )}
+                <button
+                  className="add-tmdb-title-button"
+                  type="button"
+                  disabled={isAddingItemToLibrary}
+                  onClick={handleAddItemToLibrary}
+                >
+                  {isAddingItemToLibrary ? "Adicionando..." : "Adicionar"}
+                </button>
+                {libraryActionMessage && (
+                  <p className="library-action-message" role="status">
+                    {libraryActionMessage}
+                  </p>
+                )}
+              </div>
               <div className="tmdb-detail-copy">
                 <p className="movie-kicker">
-                  {mediaType === "tv" ? "Série" : "Filme"}
+                  {tmdbMediaType === "tv" ? "Série" : "Filme"}
                 </p>
-                <h1>{getTitle(item, mediaType)}</h1>
+                <h1>{getTmdbItemDisplayTitle(tmdbItemDetails, tmdbMediaType)}</h1>
                 <p className="movie-meta">
-                  {getYear(item, mediaType)} ·{" "}
-                  {item.genres.map((genre) => genre.name).join(", ") ||
+                  {getTmdbItemReleaseYear(tmdbItemDetails, tmdbMediaType)} ·{" "}
+                  {tmdbItemDetails.genres.map((genreDetails) => genreDetails.name).join(", ") ||
                     "Gênero não informado"}
                 </p>
                 <p className="movie-synopsis">
-                  {item.overview || "Sinopse não disponível."}
+                  {tmdbItemDetails.overview || "Sinopse não disponível."}
                 </p>
                 <dl className="movie-facts">
                   <div>
                     <dt>Avaliação TMDB</dt>
-                    <dd>{item.vote_average?.toFixed(1) || "—"} / 10</dd>
+                    <dd>{tmdbItemDetails.vote_average?.toFixed(1) || "—"} / 10</dd>
                   </div>
                   <div>
-                    <dt>{mediaType === "tv" ? "Temporadas" : "Duração"}</dt>
+                    <dt>{tmdbMediaType === "tv" ? "Temporadas" : "Duração"}</dt>
                     <dd>
-                      {mediaType === "tv"
-                        ? item.number_of_seasons
-                        : `${item.runtime || "—"} min`}
+                      {tmdbMediaType === "tv"
+                        ? tmdbItemDetails.number_of_seasons
+                        : `${tmdbItemDetails.runtime || "—"} min`}
                     </dd>
                   </div>
                 </dl>
               </div>
             </article>
 
-            {mediaType === "tv" && item.seasons?.length > 0 && (
+            {tmdbMediaType === "tv" && tmdbItemDetails.seasons?.length > 0 && (
               <section
                 className="seasons-section"
                 aria-labelledby="seasons-title"
               >
                 <h2 id="seasons-title">Temporadas</h2>
                 <div className="seasons-list">
-                  {item.seasons
-                    .filter((season) => season.season_number > 0)
-                    .map((season) => (
+                  {tmdbItemDetails.seasons
+                    .filter((seasonDetails) => seasonDetails.season_number > 0)
+                    .map((seasonDetails) => (
                       <SeasonAccordion
-                        key={season.id}
-                        seriesId={item.id}
-                        season={season}
+                        key={seasonDetails.id}
+                        seriesIdentifier={tmdbItemDetails.id}
+                        seasonDetails={seasonDetails}
                       />
                     ))}
                 </div>

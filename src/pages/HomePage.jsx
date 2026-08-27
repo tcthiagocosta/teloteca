@@ -1,6 +1,6 @@
 import MovieList from "../components/MovieList.jsx";
 import Navbar from "../components/Navbar.jsx";
-import { movies } from "../data/movies.js";
+import { libraryTitles } from "../data/movies.js";
 
 function HomePage() {
   return (
@@ -15,7 +15,7 @@ function HomePage() {
             <a href="#add-title">+ Adicionar título</a>
           </div>
         </section>
-        <MovieList movies={movies} />
+        <MovieList libraryTitles={libraryTitles} />
       </main>
     </div>
   );

@@ -1,4 +1,4 @@
-const links = [
+const navigationLinkDefinitions = [
   ["Início", "⌂"],
   ["Descobrir", "⌁"],
   ["Em breve", "◷"],
@@ -7,25 +7,25 @@ const links = [
   ["Ajustes", "⚙"],
 ];
 
-function Sidebar({ isOpen, onClose }) {
+function Sidebar({ isSidebarOpen, onSidebarClose }) {
   return (
     <>
       <div
-        className={`sidebar-backdrop ${isOpen ? "is-visible" : ""}`}
-        onClick={onClose}
+        className={`sidebar-backdrop ${isSidebarOpen ? "is-visible" : ""}`}
+        onClick={onSidebarClose}
         aria-hidden="true"
       />
-      <aside className={`sidebar ${isOpen ? "is-open" : ""}`}>
+      <aside className={`sidebar ${isSidebarOpen ? "is-open" : ""}`}>
         <nav aria-label="Navegação principal">
-          {links.map(([label, icon], index) => (
+          {navigationLinkDefinitions.map(([linkLabel, linkIcon], linkIndex) => (
             <a
-              key={label}
-              className={`sidebar-link ${index === 0 ? "is-active" : ""}`}
+              key={linkLabel}
+              className={`sidebar-link ${linkIndex === 0 ? "is-active" : ""}`}
               href="#home"
-              onClick={onClose}
+              onClick={onSidebarClose}
             >
-              <span aria-hidden="true">{icon}</span>
-              <em>{label}</em>
+              <span aria-hidden="true">{linkIcon}</span>
+              <em>{linkLabel}</em>
             </a>
           ))}
         </nav>
