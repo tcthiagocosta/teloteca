@@ -1,4 +1,10 @@
+import { supabaseClient } from "../lib/supabaseClient.js";
+
 function Navbar() {
+  async function handleSignOut() {
+    await supabaseClient.auth.signOut();
+  }
+
   return (
     <header className="topbar">
       <a className="brand" href="#home">
@@ -15,6 +21,9 @@ function Navbar() {
           aria-label="Buscar na coleção"
         />
       </label>
+      <button className="sign-out-button" type="button" onClick={handleSignOut}>
+        Sair
+      </button>
     </header>
   );
 }

@@ -2,23 +2,58 @@ import { useEffect, useState } from "react";
 import HomePage from "./pages/HomePage.jsx";
 import AddTitlePage from "./pages/AddTitlePage.jsx";
 import MoviePage from "./pages/MoviePage.jsx";
-import { movies } from "./data/movies.js";
+import TmdbItemPage from "./pages/TmdbItemPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import { supabaseClient } from "./lib/supabaseClient.js";
 import "./App.css";
 
 function App() {
-  const [hash, setHash] = useState(() => window.location.hash);
+  const [currentLocationHash, setCurrentLocationHash] = useState(
+    () => window.location.hash,
+  );
+  const [currentSession, setCurrentSession] = useState(undefined);
 
   useEffect(() => {
-    const updateHash = () => setHash(window.location.hash);
-    window.addEventListener("hashchange", updateHash);
-    return () => window.removeEventListener("hashchange", updateHash);
+    const synchronizeLocationHash = () =>
+      setCurrentLocationHash(window.location.hash);
+    window.addEventListener("hashchange", synchronizeLocationHash);
+    return () =>
+      window.removeEventListener("hashchange", synchronizeLocationHash);
   }, []);
 
-  if (hash === "#add-title") return <AddTitlePage />;
+  useEffect(() => {
+    supabaseClient.auth.getSession().then(({ data: sessionData }) => {
+      setCurrentSession(sessionData.session);
+    });
 
-  const movieId = hash.replace("#movie/", "");
-  const movie = movies.find((item) => item.id === movieId);
-  return movie ? <MoviePage movie={movie} /> : <HomePage />;
+    const { data: authSubscriptionData } = supabaseClient.auth.onAuthStateChange(
+      (_event, session) => setCurrentSession(session),
+    );
+    return () => authSubscriptionData.subscription.unsubscribe();
+  }, []);
+
+  if (currentSession === undefined) {
+    return <main className="auth-page"><p className="loading-message">Carregando...</p></main>;
+  }
+
+  if (!currentSession) return <LoginPage onLogin={setCurrentSession} />;
+
+  if (currentLocationHash === "#add-title") return <AddTitlePage />;
+
+  const tmdbRouteMatch = currentLocationHash.match(/^#tmdb\/(movie|tv)\/(\d+)$/);
+  if (tmdbRouteMatch) {
+    return (
+      <TmdbItemPage
+        tmdbMediaType={tmdbRouteMatch[1]}
+        tmdbItemIdentifier={tmdbRouteMatch[2]}
+      />
+    );
+  }
+
+  const mediaIdentifierMatch = currentLocationHash.match(/^#movie\/(\d+)$/);
+  return mediaIdentifierMatch ? (
+      <MoviePage mediaIdentifier={Number(mediaIdentifierMatch[1])} />
+  ) : <HomePage />;
 }
 
 export default App;
