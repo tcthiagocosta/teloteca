@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar.jsx";
+import { TMDB_API_KEY } from "../config/tmdb.js";
 
 const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/w342";
 
@@ -20,15 +21,13 @@ function AddTitlePage() {
 
   async function handleSearch(event) {
     event.preventDefault();
-    const apiKey = import.meta.env.VITE_TMDB_API_KEY;
-
     if (!query.trim()) {
       setError("Digite um título para pesquisar.");
       return;
     }
 
-    if (!apiKey) {
-      setError("Configure a chave VITE_TMDB_API_KEY no arquivo .env.local.");
+    if (TMDB_API_KEY === "COLE_SUA_CHAVE_DA_TMDB_AQUI") {
+      setError("Configure a chave da TMDB no arquivo src/config/tmdb.js.");
       return;
     }
 
@@ -37,7 +36,7 @@ function AddTitlePage() {
 
     try {
       const params = new URLSearchParams({
-        api_key: apiKey,
+        api_key: TMDB_API_KEY,
         language: "pt-BR",
         query: query.trim(),
         include_adult: "false",
