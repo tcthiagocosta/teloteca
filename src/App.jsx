@@ -1,8 +1,24 @@
-import HomePage from './pages/HomePage.jsx'
-import './App.css'
+import { useEffect, useState } from "react";
+import HomePage from "./pages/HomePage.jsx";
+import AddTitlePage from "./pages/AddTitlePage.jsx";
+import MoviePage from "./pages/MoviePage.jsx";
+import { movies } from "./data/movies.js";
+import "./App.css";
 
 function App() {
-  return <HomePage />
+  const [hash, setHash] = useState(() => window.location.hash);
+
+  useEffect(() => {
+    const updateHash = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", updateHash);
+    return () => window.removeEventListener("hashchange", updateHash);
+  }, []);
+
+  if (hash === "#add-title") return <AddTitlePage />;
+
+  const movieId = hash.replace("#movie/", "");
+  const movie = movies.find((item) => item.id === movieId);
+  return movie ? <MoviePage movie={movie} /> : <HomePage />;
 }
 
-export default App
+export default App;
