@@ -169,7 +169,7 @@ function MoviePage({ mediaIdentifier }) {
             {episodeErrorMessage && <p className="search-message is-error" role="alert">{episodeErrorMessage}</p>}
             <div className="seasons-list">
               {seriesSeasons.map((season) => (
-                <details className="season-accordion" key={season.id} open>
+                <details className="season-accordion saved-season-accordion" key={season.id}>
                   <summary>
                     <div className="season-summary-copy">
                       <h3>Temporada {season.season_number}</h3>

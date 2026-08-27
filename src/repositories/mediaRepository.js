@@ -57,7 +57,7 @@ export const mediaRepository = {
   /**
    * @param {MediaInsert} mediaToCreate
    * @param {object[]} seasonsToCreate
-   * @param {object[]} episodesToCreate
+  * @param {object[]} episodesToCreate
    * @returns {Promise<Media>}
    */
   async createSeries(mediaToCreate, seasonsToCreate, episodesToCreate) {
@@ -65,6 +65,7 @@ export const mediaRepository = {
       "add_tv_to_library",
       {
         p_media: mediaToCreate,
+        p_description: mediaToCreate.description || null,
         p_seasons: seasonsToCreate,
         p_episodes: episodesToCreate,
       },

@@ -98,6 +98,7 @@ CREATE POLICY "episodes_delete_public"
 
 CREATE OR REPLACE FUNCTION public.add_tv_to_library(
   p_media jsonb,
+  p_description text,
   p_seasons jsonb,
   p_episodes jsonb
 )
@@ -115,7 +116,7 @@ BEGIN
     p_media->>'type',
     p_media->>'title',
     p_media->>'poster_path',
-    p_media->>'description'
+    p_description
   )
   RETURNING * INTO created_media;
 
@@ -145,5 +146,5 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.add_tv_to_library(jsonb, jsonb, jsonb)
+GRANT EXECUTE ON FUNCTION public.add_tv_to_library(jsonb, text, jsonb, jsonb)
   TO authenticated;
