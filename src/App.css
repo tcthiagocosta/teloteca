@@ -940,7 +940,7 @@
   list-style: none;
 }
 .saved-season-accordion summary {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
 }
 .season-accordion summary::-webkit-details-marker {
   display: none;
@@ -971,6 +971,26 @@
   color: #72dfbf;
   font-size: 1.2rem;
   transition: transform 0.2s ease;
+}
+.mark-season-watched-button {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #20d59c;
+  border-radius: 0.2rem;
+  color: #20d59c;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.mark-season-watched-button:hover {
+  color: #123033;
+  background: #20d59c;
+}
+.mark-season-watched-button:disabled {
+  border-color: #526571;
+  color: #84919b;
+  cursor: default;
+  opacity: 0.7;
 }
 .season-accordion[open] .accordion-icon {
   transform: rotate(180deg);

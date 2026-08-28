@@ -130,6 +130,14 @@ function PaginaFilme({ mediaIdentifier }) {
     }
   }
 
+  async function lidarComMarcarTodosEpisodios(temporada) {
+    await Promise.all(
+      temporada.episodios
+        .filter((episodio) => !episodio.assistido)
+        .map((episodio) => lidarComAlteracaoEpisodioAssistido(episodio.id, true)),
+    );
+  }
+
   async function lidarComExclusaoMidia() {
     definirEstaExcluindoMidia(true);
     definirMensagemErroExclusao("");
@@ -264,6 +272,18 @@ function PaginaFilme({ mediaIdentifier }) {
                     <div className="season-summary-copy">
                       <h3>Temporada {temporada.numero_temporada}</h3>
                     </div>
+                    <button
+                      className="mark-season-watched-button"
+                      type="button"
+                      disabled={temporada.episodios.every((episodio) => episodio.assistido)}
+                      onClick={(evento) => {
+                        evento.preventDefault();
+                        evento.stopPropagation();
+                        lidarComMarcarTodosEpisodios(temporada);
+                      }}
+                    >
+                      Marcar todos
+                    </button>
                     <span className="accordion-icon" aria-hidden="true">⌄</span>
                   </summary>
                   <div className="episodes-panel">
