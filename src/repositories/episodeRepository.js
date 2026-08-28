@@ -9,6 +9,16 @@ function lancarSeErroSupabase(erroSupabase) {
 }
 
 export const episodeRepository = {
+  /** @returns {Promise<Episodio[]>} */
+  async obterTodos() {
+    const { data: linhasEpisodio, error: erroSupabase } = await clienteSupabase
+      .from("episodios")
+      .select("*")
+      .order("numero_episodio", { ascending: true });
+    lancarSeErroSupabase(erroSupabase);
+    return linhasEpisodio;
+  },
+
   /** @param {number} identificadorTemporada @returns {Promise<Episodio[]>} */
   async obterPorIdTemporada(identificadorTemporada) {
     const { data: linhasEpisodio, error: erroSupabase } = await clienteSupabase

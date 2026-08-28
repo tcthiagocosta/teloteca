@@ -9,6 +9,16 @@ function lancarSeErroSupabase(erroSupabase) {
 }
 
 export const seasonRepository = {
+  /** @returns {Promise<Temporada[]>} */
+  async obterTodos() {
+    const { data: linhasTemporada, error: erroSupabase } = await clienteSupabase
+      .from("temporadas")
+      .select("*")
+      .order("numero_temporada", { ascending: true });
+    lancarSeErroSupabase(erroSupabase);
+    return linhasTemporada;
+  },
+
   /** @param {number} identificadorMidia @returns {Promise<Temporada[]>} */
   async obterPorIdMidia(identificadorMidia) {
     const { data: linhasTemporada, error: erroSupabase } = await clienteSupabase

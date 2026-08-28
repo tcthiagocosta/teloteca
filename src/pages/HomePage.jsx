@@ -34,25 +34,26 @@ function PaginaInicial() {
     async function carregarItensMidia() {
       try {
         const linhasMidia = await mediaRepository.obterTodos();
+        const [linhasTemporadas, linhasEpisodios] = await Promise.all([
+          seasonRepository.obterTodos(),
+          episodeRepository.obterTodos(),
+        ]);
         const minutosDosFilmes = linhasMidia
           .filter((itemMidia) => itemMidia.type === "movie")
           .reduce((total, itemMidia) => total + (Number(itemMidia.duracao) || 0), 0);
-        const series = linhasMidia.filter((itemMidia) => itemMidia.type === "tv");
-        const minutosDasSeriesAssistidos = await series.reduce(
-          async (promessaTotal, itemSerie) => {
-            const totalAtual = await promessaTotal;
-            const temporadas = await seasonRepository.obterPorIdMidia(itemSerie.id);
-            const episodiosPorTemporada = await Promise.all(
-              temporadas.map((temporada) => episodeRepository.obterPorIdTemporada(temporada.id)),
-            );
-            const minutosDaSerie = episodiosPorTemporada
-              .flat()
-              .filter((episodio) => episodio.assistido)
-              .reduce((total, episodio) => total + (Number(episodio.duracao) || 0), 0);
-            return totalAtual + minutosDaSerie;
-          },
-          Promise.resolve(0),
+        const idsSeries = new Set(
+          linhasMidia
+            .filter((itemMidia) => itemMidia.type === "tv")
+            .map((itemMidia) => itemMidia.id),
         );
+        const idsTemporadasSeries = new Set(
+          linhasTemporadas
+            .filter((temporada) => idsSeries.has(temporada.midia_id))
+            .map((temporada) => temporada.id),
+        );
+        const minutosDasSeriesAssistidos = linhasEpisodios
+          .filter((episodio) => idsTemporadasSeries.has(episodio.temporada_id) && episodio.assistido)
+          .reduce((total, episodio) => total + (Number(episodio.duracao) || 0), 0);
 
         if (componenteMontado) {
           definirItensMidia(linhasMidia);
