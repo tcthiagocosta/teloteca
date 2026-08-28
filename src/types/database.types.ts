@@ -1,140 +1,181 @@
-export type MediaType = "movie" | "tv";
-export type MediaStatus = "planned" | "watching" | "completed" | "dropped";
+export type TipoMidia = "movie" | "tv";
 
-export interface Database {
+export type StatusMidia =
+  | "planejado"
+  | "assistindo"
+  | "concluido"
+  | "abandonado";
+
+export interface BancoDeDados {
   public: {
     Tables: {
-      media: {
+      midias: {
         Row: {
           id: number;
           tmdb_id: number;
-          type: MediaType;
-          title: string;
-          poster_path: string | null;
-          description: string | null;
-          status: MediaStatus;
-          rating: number | null;
-          notes: string | null;
-          created_at: string;
+          type: TipoMidia;
+          titulo: string;
+          caminho_poster: string | null;
+          descricao: string | null;
+          duracao: number | null;
+          status: StatusMidia;
+          avaliacao: number | null;
+          observacoes: string | null;
+          criado_em: string;
         };
+
         Insert: {
           id?: never;
           tmdb_id: number;
-          type: MediaType;
-          title: string;
-          poster_path?: string | null;
-          description?: string | null;
-          status?: MediaStatus;
-          rating?: number | null;
-          notes?: string | null;
-          created_at?: string;
+          type: TipoMidia;
+          titulo: string;
+          caminho_poster?: string | null;
+          descricao?: string | null;
+          duracao?: number | null;
+          status?: StatusMidia;
+          avaliacao?: number | null;
+          observacoes?: string | null;
+          criado_em?: string;
         };
+
         Update: {
           id?: never;
           tmdb_id?: number;
-          type?: MediaType;
-          title?: string;
-          poster_path?: string | null;
-          description?: string | null;
-          status?: MediaStatus;
-          rating?: number | null;
-          notes?: string | null;
-          created_at?: string;
+          type?: TipoMidia;
+          titulo?: string;
+          caminho_poster?: string | null;
+          descricao?: string | null;
+          duracao?: number | null;
+          status?: StatusMidia;
+          avaliacao?: number | null;
+          observacoes?: string | null;
+          criado_em?: string;
         };
+
         Relationships: [];
       };
-      seasons: {
+
+      temporadas: {
         Row: {
           id: number;
-          media_id: number;
+          midia_id: number;
           tmdb_id: number;
-          season_number: number;
-          name: string | null;
-          created_at: string;
+          numero_temporada: number;
+          nome: string | null;
+          criado_em: string;
         };
+
         Insert: {
           id?: never;
-          media_id: number;
+          midia_id: number;
           tmdb_id: number;
-          season_number: number;
-          name?: string | null;
-          created_at?: string;
+          numero_temporada: number;
+          nome?: string | null;
+          criado_em?: string;
         };
+
         Update: {
           id?: never;
-          media_id?: number;
+          midia_id?: number;
           tmdb_id?: number;
-          season_number?: number;
-          name?: string | null;
-          created_at?: string;
+          numero_temporada?: number;
+          nome?: string | null;
+          criado_em?: string;
         };
+
         Relationships: [
           {
-            foreignKeyName: "seasons_media_id_fkey";
-            columns: ["media_id"];
+            foreignKeyName: "temporadas_midia_id_fkey";
+            columns: ["midia_id"];
             isOneToOne: false;
-            referencedRelation: "media";
+            referencedRelation: "midias";
             referencedColumns: ["id"];
           },
         ];
       };
-      episodes: {
+
+      episodios: {
         Row: {
           id: number;
-          season_id: number;
+          temporada_id: number;
           tmdb_id: number;
-          episode_number: number;
-          name: string | null;
-          watched: boolean;
-          watched_at: string | null;
-          created_at: string;
+          numero_episodio: number;
+          nome: string | null;
+          assistido: boolean;
+          assistido_em: string | null;
+          criado_em: string;
+          duracao: number | null;
         };
+
         Insert: {
           id?: never;
-          season_id: number;
+          temporada_id: number;
           tmdb_id: number;
-          episode_number: number;
-          name?: string | null;
-          watched?: boolean;
-          watched_at?: string | null;
-          created_at?: string;
+          numero_episodio: number;
+          nome?: string | null;
+          assistido?: boolean;
+          assistido_em?: string | null;
+          criado_em?: string;
+          duracao?: number | null;
         };
+
         Update: {
           id?: never;
-          season_id?: number;
+          temporada_id?: number;
           tmdb_id?: number;
-          episode_number?: number;
-          name?: string | null;
-          watched?: boolean;
-          watched_at?: string | null;
-          created_at?: string;
+          numero_episodio?: number;
+          nome?: string | null;
+          assistido?: boolean;
+          assistido_em?: string | null;
+          criado_em?: string;
+          duracao?: number | null;
         };
+
         Relationships: [
           {
-            foreignKeyName: "episodes_season_id_fkey";
-            columns: ["season_id"];
+            foreignKeyName: "episodios_temporada_id_fkey";
+            columns: ["temporada_id"];
             isOneToOne: false;
-            referencedRelation: "seasons";
+            referencedRelation: "temporadas";
             referencedColumns: ["id"];
           },
         ];
       };
     };
+
     Views: Record<string, never>;
+
     Functions: Record<string, never>;
+
     Enums: Record<string, never>;
+
     CompositeTypes: Record<string, never>;
   };
 }
 
-export type Media = Database["public"]["Tables"]["media"]["Row"];
-export type MediaInsert = Database["public"]["Tables"]["media"]["Insert"];
-export type MediaUpdate = Database["public"]["Tables"]["media"]["Update"];
+export type Midia =
+  BancoDeDados["public"]["Tables"]["midias"]["Row"];
 
-export type Season = Database["public"]["Tables"]["seasons"]["Row"];
-export type SeasonInsert = Database["public"]["Tables"]["seasons"]["Insert"];
-export type SeasonUpdate = Database["public"]["Tables"]["seasons"]["Update"];
+export type InsercaoMidia =
+  BancoDeDados["public"]["Tables"]["midias"]["Insert"];
 
-export type Episode = Database["public"]["Tables"]["episodes"]["Row"];
-export type EpisodeInsert = Database["public"]["Tables"]["episodes"]["Insert"];
-export type EpisodeUpdate = Database["public"]["Tables"]["episodes"]["Update"];
+export type AtualizacaoMidia =
+  BancoDeDados["public"]["Tables"]["midias"]["Update"];
+
+export type Temporada =
+  BancoDeDados["public"]["Tables"]["temporadas"]["Row"];
+
+export type InsercaoTemporada =
+  BancoDeDados["public"]["Tables"]["temporadas"]["Insert"];
+
+export type AtualizacaoTemporada =
+  BancoDeDados["public"]["Tables"]["temporadas"]["Update"];
+
+export type Episodio =
+  BancoDeDados["public"]["Tables"]["episodios"]["Row"];
+
+export type InsercaoEpisodio =
+  BancoDeDados["public"]["Tables"]["episodios"]["Insert"];
+
+export type AtualizacaoEpisodio =
+  BancoDeDados["public"]["Tables"]["episodios"]["Update"];

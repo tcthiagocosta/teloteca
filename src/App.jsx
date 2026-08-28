@@ -1,59 +1,59 @@
 import { useEffect, useState } from "react";
-import HomePage from "./pages/HomePage.jsx";
-import AddTitlePage from "./pages/AddTitlePage.jsx";
-import MoviePage from "./pages/MoviePage.jsx";
-import TmdbItemPage from "./pages/TmdbItemPage.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import { supabaseClient } from "./lib/supabaseClient.js";
+import PaginaInicial from "./pages/HomePage.jsx";
+import PaginaAdicionarTitulo from "./pages/AddTitlePage.jsx";
+import PaginaFilme from "./pages/MoviePage.jsx";
+import PaginaItemTmdb from "./pages/TmdbItemPage.jsx";
+import PaginaLogin from "./pages/LoginPage.jsx";
+import { clienteSupabase } from "./lib/supabaseClient.js";
 import "./App.css";
 
-function App() {
-  const [currentLocationHash, setCurrentLocationHash] = useState(
+function Aplicacao() {
+  const [hashLocalizacaoAtual, definirHashLocalizacaoAtual] = useState(
     () => window.location.hash,
   );
-  const [currentSession, setCurrentSession] = useState(undefined);
+  const [sessaoAtual, definirSessaoAtual] = useState(undefined);
 
   useEffect(() => {
-    const synchronizeLocationHash = () =>
-      setCurrentLocationHash(window.location.hash);
-    window.addEventListener("hashchange", synchronizeLocationHash);
+    const sincronizarHashLocalizacao = () =>
+      definirHashLocalizacaoAtual(window.location.hash);
+    window.addEventListener("hashchange", sincronizarHashLocalizacao);
     return () =>
-      window.removeEventListener("hashchange", synchronizeLocationHash);
+      window.removeEventListener("hashchange", sincronizarHashLocalizacao);
   }, []);
 
   useEffect(() => {
-    supabaseClient.auth.getSession().then(({ data: sessionData }) => {
-      setCurrentSession(sessionData.session);
+    clienteSupabase.auth.getSession().then(({ data: dadosSessao }) => {
+      definirSessaoAtual(dadosSessao.session);
     });
 
-    const { data: authSubscriptionData } = supabaseClient.auth.onAuthStateChange(
-      (_event, session) => setCurrentSession(session),
+    const { data: dadosInscricaoAutenticacao } = clienteSupabase.auth.onAuthStateChange(
+      (_evento, sessao) => definirSessaoAtual(sessao),
     );
-    return () => authSubscriptionData.subscription.unsubscribe();
+    return () => dadosInscricaoAutenticacao.subscription.unsubscribe();
   }, []);
 
-  if (currentSession === undefined) {
+  if (sessaoAtual === undefined) {
     return <main className="auth-page"><p className="loading-message">Carregando...</p></main>;
   }
 
-  if (!currentSession) return <LoginPage onLogin={setCurrentSession} />;
+  if (!sessaoAtual) return <PaginaLogin onLogin={definirSessaoAtual} />;
 
-  if (currentLocationHash === "#add-title") return <AddTitlePage />;
+  if (hashLocalizacaoAtual === "#add-title") return <PaginaAdicionarTitulo />;
 
-  const tmdbRouteMatch = currentLocationHash.match(/^#tmdb\/(movie|tv)\/(\d+)$/);
-  if (tmdbRouteMatch) {
+  const correspondenciaRotaTmdb = hashLocalizacaoAtual.match(/^#tmdb\/(movie|tv)\/(\d+)$/);
+  if (correspondenciaRotaTmdb) {
     return (
-      <TmdbItemPage
-        tmdbMediaType={tmdbRouteMatch[1]}
-        tmdbItemIdentifier={tmdbRouteMatch[2]}
+      <PaginaItemTmdb
+        tmdbMediaType={correspondenciaRotaTmdb[1]}
+        tmdbItemIdentifier={correspondenciaRotaTmdb[2]}
       />
     );
   }
 
-  const mediaIdentifierMatch = currentLocationHash.match(/^#movie\/(\d+)$/);
-  return mediaIdentifierMatch ? (
-      <MoviePage mediaIdentifier={Number(mediaIdentifierMatch[1])} />
-  ) : <HomePage />;
+  const correspondenciaIdentificadorMidia = hashLocalizacaoAtual.match(/^#movie\/(\d+)$/);
+  return correspondenciaIdentificadorMidia ? (
+      <PaginaFilme mediaIdentifier={Number(correspondenciaIdentificadorMidia[1])} />
+  ) : <PaginaInicial />;
 }
 
-export default App;
+export default Aplicacao;

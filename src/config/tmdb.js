@@ -1,1 +1,1 @@
-export const TMDB_API_ACCESS_KEY = "97bfe9f178eabb21c814b88e94b41465";
+export const CHAVE_ACESSO_API_TMDB = "97bfe9f178eabb21c814b88e94b41465";

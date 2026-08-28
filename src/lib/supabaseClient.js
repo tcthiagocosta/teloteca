@@ -1,22 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "../config/supabase.js";
+import { CHAVE_ANONIMA_SUPABASE, URL_SUPABASE } from "../config/supabase.js";
 
-/** @typedef {import("../types/database.types").Database} Database */
+/** @typedef {import("../types/database.types").BancoDeDados} BancoDeDados */
 
-const supabaseProjectUrl = SUPABASE_URL;
-const supabaseAnonymousKey = SUPABASE_ANON_KEY;
+const urlProjetoSupabase = URL_SUPABASE;
+const chaveAnonimaSupabase = CHAVE_ANONIMA_SUPABASE;
 
 if (
-  supabaseProjectUrl === "COLE_A_URL_DO_SEU_PROJETO_SUPABASE_AQUI" ||
-  supabaseAnonymousKey === "COLE_A_CHAVE_ANON_DO_SEU_PROJETO_SUPABASE_AQUI"
+  urlProjetoSupabase === "COLE_A_URL_DO_SEU_PROJETO_SUPABASE_AQUI" ||
+  chaveAnonimaSupabase === "COLE_A_CHAVE_ANON_DO_SEU_PROJETO_SUPABASE_AQUI"
 ) {
   throw new Error(
     "Configure SUPABASE_URL and SUPABASE_ANON_KEY in src/config/supabase.js before starting the application.",
   );
 }
 
-/** @type {import("@supabase/supabase-js").SupabaseClient<Database>} */
-export const supabaseClient = createClient(
-  supabaseProjectUrl,
-  supabaseAnonymousKey,
+/** @type {import("@supabase/supabase-js").SupabaseClient<BancoDeDados>} */
+export const clienteSupabase = createClient(
+  urlProjetoSupabase,
+  chaveAnonimaSupabase,
 );

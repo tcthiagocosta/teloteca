@@ -1,74 +1,74 @@
-import { supabaseClient } from "../lib/supabaseClient.js";
+import { clienteSupabase } from "../lib/supabaseClient.js";
 
-/** @typedef {import("../types/database.types").Season} Season */
-/** @typedef {import("../types/database.types").SeasonInsert} SeasonInsert */
-/** @typedef {import("../types/database.types").SeasonUpdate} SeasonUpdate */
+/** @typedef {import("../types/database.types").Temporada} Temporada */
+/** @typedef {import("../types/database.types").InsercaoTemporada} InsercaoTemporada */
+/** @typedef {import("../types/database.types").AtualizacaoTemporada} AtualizacaoTemporada */
 
-function throwIfSupabaseError(supabaseError) {
-  if (supabaseError) throw supabaseError;
+function lancarSeErroSupabase(erroSupabase) {
+  if (erroSupabase) throw erroSupabase;
 }
 
 export const seasonRepository = {
-  /** @param {number} mediaIdentifier @returns {Promise<Season[]>} */
-  async getByMediaId(mediaIdentifier) {
-    const { data: seasonRows, error: supabaseError } = await supabaseClient
-      .from("seasons")
+  /** @param {number} identificadorMidia @returns {Promise<Temporada[]>} */
+  async obterPorIdMidia(identificadorMidia) {
+    const { data: linhasTemporada, error: erroSupabase } = await clienteSupabase
+      .from("temporadas")
       .select("*")
-      .eq("media_id", mediaIdentifier)
-      .order("season_number", { ascending: true });
-    throwIfSupabaseError(supabaseError);
-    return seasonRows;
+      .eq("midia_id", identificadorMidia)
+      .order("numero_temporada", { ascending: true });
+    lancarSeErroSupabase(erroSupabase);
+    return linhasTemporada;
   },
 
-  /** @param {number} seasonIdentifier @returns {Promise<Season | null>} */
-  async getById(seasonIdentifier) {
-    const { data: seasonRow, error: supabaseError } = await supabaseClient
-      .from("seasons")
+  /** @param {number} identificadorTemporada @returns {Promise<Temporada | null>} */
+  async obterPorId(identificadorTemporada) {
+    const { data: linhaTemporada, error: erroSupabase } = await clienteSupabase
+      .from("temporadas")
       .select("*")
-      .eq("id", seasonIdentifier)
+      .eq("id", identificadorTemporada)
       .maybeSingle();
-    throwIfSupabaseError(supabaseError);
-    return seasonRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaTemporada;
   },
 
-  /** @param {SeasonInsert} seasonToCreate @returns {Promise<Season>} */
-  async create(seasonToCreate) {
-    const { data: createdSeasonRow, error: supabaseError } = await supabaseClient
-      .from("seasons")
-      .insert(seasonToCreate)
+  /** @param {InsercaoTemporada} temporadaParaCriar @returns {Promise<Temporada>} */
+    async criar(temporadaParaCriar) {
+    const { data: linhaTemporadaCriada, error: erroSupabase } = await clienteSupabase
+        .from("temporadas")
+      .insert(temporadaParaCriar)
       .select()
       .single();
-    throwIfSupabaseError(supabaseError);
-    return createdSeasonRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaTemporadaCriada;
   },
 
-  /** @param {number} seasonIdentifier @param {SeasonUpdate} seasonChanges @returns {Promise<Season>} */
-  async update(seasonIdentifier, seasonChanges) {
-    const { data: updatedSeasonRow, error: supabaseError } = await supabaseClient
-      .from("seasons")
-      .update(seasonChanges)
-      .eq("id", seasonIdentifier)
+  /** @param {number} identificadorTemporada @param {AtualizacaoTemporada} alteracoesTemporada @returns {Promise<Temporada>} */
+    async atualizar(identificadorTemporada, alteracoesTemporada) {
+    const { data: linhaTemporadaAtualizada, error: erroSupabase } = await clienteSupabase
+        .from("temporadas")
+      .update(alteracoesTemporada)
+        .eq("id", identificadorTemporada)
       .select()
       .single();
-    throwIfSupabaseError(supabaseError);
-    return updatedSeasonRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaTemporadaAtualizada;
   },
 
   /** @param {number} mediaIdentifier @returns {Promise<void>} */
-  async removeByMediaId(mediaIdentifier) {
-    const { error: supabaseError } = await supabaseClient
-      .from("seasons")
+    async removerPorIdMidia(identificadorMidia) {
+    const { error: erroSupabase } = await clienteSupabase
+        .from("temporadas")
       .delete()
-      .eq("media_id", mediaIdentifier);
-    throwIfSupabaseError(supabaseError);
+        .eq("midia_id", identificadorMidia);
+    lancarSeErroSupabase(erroSupabase);
   },
 
   /** @param {number} seasonIdentifier @returns {Promise<void>} */
-  async remove(seasonIdentifier) {
-    const { error: supabaseError } = await supabaseClient
-      .from("seasons")
+    async remover(identificadorTemporada) {
+    const { error: erroSupabase } = await clienteSupabase
+        .from("temporadas")
       .delete()
-      .eq("id", seasonIdentifier);
-    throwIfSupabaseError(supabaseError);
+        .eq("id", identificadorTemporada);
+    lancarSeErroSupabase(erroSupabase);
   },
 };

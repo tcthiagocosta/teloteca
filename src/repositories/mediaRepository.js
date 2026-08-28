@@ -1,97 +1,216 @@
-import { supabaseClient } from "../lib/supabaseClient.js";
+import { clienteSupabase } from "../lib/supabaseClient.js";
 
-/** @typedef {import("../types/database.types").Media} Media */
-/** @typedef {import("../types/database.types").MediaInsert} MediaInsert */
-/** @typedef {import("../types/database.types").MediaUpdate} MediaUpdate */
-/** @typedef {import("../types/database.types").MediaType} MediaType */
+/** @typedef {import("../types/database.types").Midia} Midia */
+/** @typedef {import("../types/database.types").InsercaoMidia} InsercaoMidia */
+/** @typedef {import("../types/database.types").AtualizacaoMidia} AtualizacaoMidia */
+/** @typedef {import("../types/database.types").TipoMidia} TipoMidia */
 
-function throwIfSupabaseError(supabaseError) {
-  if (supabaseError) throw supabaseError;
+function lancarSeErroSupabase(erroSupabase) {
+  if (erroSupabase) throw erroSupabase;
 }
 
 export const mediaRepository = {
-  /** @returns {Promise<Media[]>} */
-  async getAll() {
-    const { data: mediaRows, error: supabaseError } = await supabaseClient
-      .from("media")
+  /** @returns {Promise<Midia[]>} */
+  async obterTodos() {
+    const { data: linhasMidia, error: erroSupabase } = await clienteSupabase
+      .from("midias")
       .select("*")
-      .order("created_at", { ascending: false });
-    throwIfSupabaseError(supabaseError);
-    return mediaRows;
+      .order("criado_em", { ascending: false });
+    lancarSeErroSupabase(erroSupabase);
+    return linhasMidia;
   },
 
-  /** @param {number} mediaIdentifier @returns {Promise<Media | null>} */
-  async getById(mediaIdentifier) {
-    const { data: mediaRow, error: supabaseError } = await supabaseClient
-      .from("media")
+  /** @param {number} identificadorMidia @returns {Promise<Midia | null>} */
+  async obterPorId(identificadorMidia) {
+    const { data: linhaMidia, error: erroSupabase } = await clienteSupabase
+      .from("midias")
       .select("*")
-      .eq("id", mediaIdentifier)
+      .eq("id", identificadorMidia)
       .maybeSingle();
-    throwIfSupabaseError(supabaseError);
-    return mediaRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaMidia;
   },
 
-  /** @param {number} tmdbIdentifier @param {MediaType} mediaType @returns {Promise<Media | null>} */
-  async getByTmdbIdentifierAndType(tmdbIdentifier, mediaType) {
-    const { data: mediaRow, error: supabaseError } = await supabaseClient
-      .from("media")
+  /** @param {number} identificadorTmdb @param {TipoMidia} tipoMidia @returns {Promise<Midia | null>} */
+  async obterPorIdentificadorETipoTmdb(identificadorTmdb, tipoMidia) {
+    const { data: linhaMidia, error: erroSupabase } = await clienteSupabase
+      .from("midias")
       .select("*")
-      .eq("tmdb_id", tmdbIdentifier)
-      .eq("type", mediaType)
+      .eq("tmdb_id", identificadorTmdb)
+      .eq("type", tipoMidia)
       .maybeSingle();
-    throwIfSupabaseError(supabaseError);
-    return mediaRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaMidia;
   },
 
-  /** @param {MediaInsert} mediaToCreate @returns {Promise<Media>} */
-  async create(mediaToCreate) {
-    const { data: createdMediaRow, error: supabaseError } = await supabaseClient
-      .from("media")
-      .insert(mediaToCreate)
+  /** @param {InsercaoMidia} midiaParaCriar @returns {Promise<Midia>} */
+  async criar(midiaParaCriar) {
+    const { data: linhaMidiaCriada, error: erroSupabase } = await clienteSupabase
+      .from("midias")
+      .insert(midiaParaCriar)
       .select()
       .single();
-    throwIfSupabaseError(supabaseError);
-    return createdMediaRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaMidiaCriada;
+  },
+
+  async criarSerie(midiaParaCriar, temporadasParaCriar, episodiosParaCriar) {
+    let linhaMidiaCriada = null;
+
+    try {
+      // ========================================================
+      // 1. CRIAR MÍDIA
+      // ========================================================
+
+      const { data: midiaCriada, error: erroCriacaoMidia } =
+        await clienteSupabase
+          .from("midias")
+          .insert(midiaParaCriar)
+          .select()
+          .single();
+
+      lancarSeErroSupabase(erroCriacaoMidia);
+
+      linhaMidiaCriada = midiaCriada;
+
+
+      // ========================================================
+      // 2. CRIAR TEMPORADAS
+      // ========================================================
+
+      const temporadasComMidia = temporadasParaCriar.map((temporada) => ({
+        ...temporada,
+        midia_id: linhaMidiaCriada.id,
+      }));
+
+      const { data: temporadasCriadas, error: erroCriacaoTemporadas } =
+        await clienteSupabase
+          .from("temporadas")
+          .insert(temporadasComMidia)
+          .select();
+
+      lancarSeErroSupabase(erroCriacaoTemporadas);
+
+
+      // ========================================================
+      // 3. CRIAR EPISÓDIOS
+      // ========================================================
+
+      const episodiosComTemporada = episodiosParaCriar
+        .map((episodio) => {
+          const {
+            numero_temporada: numeroTemporada,
+            ...dadosEpisodio
+          } = episodio;
+
+          const temporadaCriada = temporadasCriadas.find(
+            (temporada) =>
+              temporada.numero_temporada === numeroTemporada,
+          );
+
+          return temporadaCriada
+            ? {
+              ...dadosEpisodio,
+              temporada_id: temporadaCriada.id,
+            }
+            : null;
+        })
+        .filter(Boolean);
+
+      const { error: erroCriacaoEpisodios } =
+        await clienteSupabase
+          .from("episodios")
+          .insert(episodiosComTemporada);
+
+      lancarSeErroSupabase(erroCriacaoEpisodios);
+
+      return linhaMidiaCriada;
+
+    } catch (erro) {
+
+      // ========================================================
+      // ROLLBACK MANUAL
+      // ========================================================
+
+      if (linhaMidiaCriada?.id) {
+        const { error: erroRollback } = await clienteSupabase
+          .from("midias")
+          .delete()
+          .eq("id", linhaMidiaCriada.id);
+
+        if (erroRollback) {
+          console.error(
+            "Erro ao desfazer criação da série:",
+            erroRollback,
+          );
+        }
+      }
+
+      throw erro;
+    }
   },
 
   /**
-   * @param {MediaInsert} mediaToCreate
-   * @param {object[]} seasonsToCreate
-  * @param {object[]} episodesToCreate
-   * @returns {Promise<Media>}
+  * @param {InsercaoMidia} midiaParaCriar
+  * @param {object[]} temporadasParaCriar
+  * @param {object[]} episodiosParaCriar
+  * @returns {Promise<Midia>}
    */
-  async createSeries(mediaToCreate, seasonsToCreate, episodesToCreate) {
-    const { data: createdMediaRow, error: supabaseError } = await supabaseClient.rpc(
-      "add_tv_to_library",
-      {
-        p_media: mediaToCreate,
-        p_description: mediaToCreate.description || null,
-        p_seasons: seasonsToCreate,
-        p_episodes: episodesToCreate,
-      },
-    );
-    throwIfSupabaseError(supabaseError);
-    return createdMediaRow;
-  },
-
-  /** @param {number} mediaIdentifier @param {MediaUpdate} mediaChanges @returns {Promise<Media>} */
-  async update(mediaIdentifier, mediaChanges) {
-    const { data: updatedMediaRow, error: supabaseError } = await supabaseClient
-      .from("media")
-      .update(mediaChanges)
-      .eq("id", mediaIdentifier)
+  async criarSerie2(midiaParaCriar, temporadasParaCriar, episodiosParaCriar) {
+    const { data: linhaMidiaCriada, error: erroCriacaoMidia } = await clienteSupabase
+      .from("midias")
+      .insert(midiaParaCriar)
       .select()
       .single();
-    throwIfSupabaseError(supabaseError);
-    return updatedMediaRow;
+    lancarSeErroSupabase(erroCriacaoMidia);
+
+    const temporadasComMidia = temporadasParaCriar.map((temporada) => ({
+      ...temporada,
+      midia_id: linhaMidiaCriada.id,
+    }));
+    const { data: temporadasCriadas, error: erroCriacaoTemporadas } = await clienteSupabase
+      .from("temporadas")
+      .insert(temporadasComMidia)
+      .select();
+    lancarSeErroSupabase(erroCriacaoTemporadas);
+
+    const episodiosComTemporada = episodiosParaCriar
+      .map((episodio) => {
+        const { numero_temporada: numeroTemporada, ...dadosEpisodio } = episodio;
+        const temporadaCriada = temporadasCriadas.find(
+          (temporada) => temporada.numero_temporada === numeroTemporada,
+        );
+        return temporadaCriada
+          ? { ...dadosEpisodio, temporada_id: temporadaCriada.id }
+          : null;
+      })
+      .filter(Boolean);
+    const { error: erroCriacaoEpisodios } = await clienteSupabase
+      .from("episodios")
+      .insert(episodiosComTemporada);
+    lancarSeErroSupabase(erroCriacaoEpisodios);
+
+    return linhaMidiaCriada;
   },
 
-  /** @param {number} mediaIdentifier @returns {Promise<void>} */
-  async remove(mediaIdentifier) {
-    const { error: supabaseError } = await supabaseClient
-      .from("media")
+  /** @param {number} identificadorMidia @param {AtualizacaoMidia} alteracoesMidia @returns {Promise<Midia>} */
+  async atualizar(identificadorMidia, alteracoesMidia) {
+    const { data: linhaMidiaAtualizada, error: erroSupabase } = await clienteSupabase
+      .from("midias")
+      .update(alteracoesMidia)
+      .eq("id", identificadorMidia)
+      .select()
+      .single();
+    lancarSeErroSupabase(erroSupabase);
+    return linhaMidiaAtualizada;
+  },
+
+  /** @param {number} identificadorMidia @returns {Promise<void>} */
+  async remover(identificadorMidia) {
+    const { error: erroSupabase } = await clienteSupabase
+      .from("midias")
       .delete()
-      .eq("id", mediaIdentifier);
-    throwIfSupabaseError(supabaseError);
+      .eq("id", identificadorMidia);
+    lancarSeErroSupabase(erroSupabase);
   },
 };

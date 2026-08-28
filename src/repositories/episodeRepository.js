@@ -1,74 +1,113 @@
-import { supabaseClient } from "../lib/supabaseClient.js";
+import { clienteSupabase } from "../lib/supabaseClient.js";
 
-/** @typedef {import("../types/database.types").Episode} Episode */
-/** @typedef {import("../types/database.types").EpisodeInsert} EpisodeInsert */
-/** @typedef {import("../types/database.types").EpisodeUpdate} EpisodeUpdate */
+/** @typedef {import("../types/database.types").Episodio} Episodio */
+/** @typedef {import("../types/database.types").InsercaoEpisodio} InsercaoEpisodio */
+/** @typedef {import("../types/database.types").AtualizacaoEpisodio} AtualizacaoEpisodio */
 
-function throwIfSupabaseError(supabaseError) {
-  if (supabaseError) throw supabaseError;
+function lancarSeErroSupabase(erroSupabase) {
+  if (erroSupabase) throw erroSupabase;
 }
 
 export const episodeRepository = {
-  /** @param {number} seasonIdentifier @returns {Promise<Episode[]>} */
-  async getBySeasonId(seasonIdentifier) {
-    const { data: episodeRows, error: supabaseError } = await supabaseClient
-      .from("episodes")
+  /** @param {number} identificadorTemporada @returns {Promise<Episodio[]>} */
+  async obterPorIdTemporada(identificadorTemporada) {
+    const { data: linhasEpisodio, error: erroSupabase } = await clienteSupabase
+      .from("episodios")
       .select("*")
-      .eq("season_id", seasonIdentifier)
-      .order("episode_number", { ascending: true });
-    throwIfSupabaseError(supabaseError);
-    return episodeRows;
+      .eq("temporada_id", identificadorTemporada)
+      .order("numero_episodio", { ascending: true });
+    lancarSeErroSupabase(erroSupabase);
+    return linhasEpisodio;
   },
 
-  /** @param {number} episodeIdentifier @returns {Promise<Episode | null>} */
-  async getById(episodeIdentifier) {
-    const { data: episodeRow, error: supabaseError } = await supabaseClient
-      .from("episodes")
+  /** @param {number} identificadorEpisodio @returns {Promise<Episodio | null>} */
+  async obterPorId(identificadorEpisodio) {
+    const { data: linhaEpisodio, error: erroSupabase } = await clienteSupabase
+      .from("episodios")
       .select("*")
-      .eq("id", episodeIdentifier)
+      .eq("id", identificadorEpisodio)
       .maybeSingle();
-    throwIfSupabaseError(supabaseError);
-    return episodeRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaEpisodio;
   },
 
-  /** @param {EpisodeInsert} episodeToCreate @returns {Promise<Episode>} */
-  async create(episodeToCreate) {
-    const { data: createdEpisodeRow, error: supabaseError } = await supabaseClient
-      .from("episodes")
-      .insert(episodeToCreate)
+  /** @param {InsercaoEpisodio} episodioParaCriar @returns {Promise<Episodio>} */
+  async criar(episodioParaCriar) {
+    const { data: linhaEpisodioCriada, error: erroSupabase } = await clienteSupabase
+      .from("episodios")
+      .insert(episodioParaCriar)
       .select()
       .single();
-    throwIfSupabaseError(supabaseError);
-    return createdEpisodeRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaEpisodioCriada;
   },
 
-  /** @param {number} episodeIdentifier @param {EpisodeUpdate} episodeChanges @returns {Promise<Episode>} */
-  async update(episodeIdentifier, episodeChanges) {
-    const { data: updatedEpisodeRow, error: supabaseError } = await supabaseClient
-      .from("episodes")
-      .update(episodeChanges)
-      .eq("id", episodeIdentifier)
+  /** @param {number} identificadorEpisodio @param {AtualizacaoEpisodio} alteracoesEpisodio @returns {Promise<Episodio>} */
+  async atualizar(identificadorEpisodio, alteracoesEpisodio) {
+    const { data: linhaEpisodioAtualizada, error: erroSupabase } = await clienteSupabase
+      .from("episodios")
+      .update(alteracoesEpisodio)
+      .eq("id", identificadorEpisodio)
       .select()
       .single();
-    throwIfSupabaseError(supabaseError);
-    return updatedEpisodeRow;
+    lancarSeErroSupabase(erroSupabase);
+    return linhaEpisodioAtualizada;
   },
 
-  /** @param {number} seasonIdentifier @returns {Promise<void>} */
-  async removeBySeasonId(seasonIdentifier) {
-    const { error: supabaseError } = await supabaseClient
-      .from("episodes")
+  /** @param {number} identificadorTemporada @returns {Promise<void>} */
+  async removerPorIdTemporada(identificadorTemporada) {
+    const { error: erroSupabase } = await clienteSupabase
+      .from("episodios")
       .delete()
-      .eq("season_id", seasonIdentifier);
-    throwIfSupabaseError(supabaseError);
+      .eq("temporada_id", identificadorTemporada);
+    lancarSeErroSupabase(erroSupabase);
   },
 
-  /** @param {number} episodeIdentifier @returns {Promise<void>} */
-  async remove(episodeIdentifier) {
-    const { error: supabaseError } = await supabaseClient
-      .from("episodes")
+  /** @param {number} identificadorEpisodio @returns {Promise<void>} */
+  async remover(identificadorEpisodio) {
+    const { error: erroSupabase } = await clienteSupabase
+      .from("episodios")
       .delete()
-      .eq("id", episodeIdentifier);
-    throwIfSupabaseError(supabaseError);
+      .eq("id", identificadorEpisodio);
+    lancarSeErroSupabase(erroSupabase);
+  },
+
+  async todosAssistidosPorIdMidia(identificadorMidia) {
+    // Busca todas as temporadas da mídia
+    const { data: temporadas, error: erroTemporadas } =
+      await clienteSupabase
+        .from("temporadas")
+        .select("id")
+        .eq("midia_id", identificadorMidia);
+
+    lancarSeErroSupabase(erroTemporadas);
+
+    const idsTemporadas = temporadas.map(
+      (temporada) => temporada.id,
+    );
+
+    // Se não existem temporadas, a mídia não pode ser considerada concluída
+    if (idsTemporadas.length === 0) {
+      return false;
+    }
+
+    // Busca todos os episódios dessas temporadas
+    const { data: episodios, error: erroEpisodios } =
+      await clienteSupabase
+        .from("episodios")
+        .select("id, assistido")
+        .in("temporada_id", idsTemporadas);
+
+    lancarSeErroSupabase(erroEpisodios);
+
+    // Se não existem episódios, não considera concluída
+    if (episodios.length === 0) {
+      return false;
+    }
+
+    // Só retorna true se TODOS estiverem assistidos
+    return episodios.every(
+      (episodio) => episodio.assistido === true,
+    );
   },
 };

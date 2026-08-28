@@ -1,29 +1,29 @@
 import { useState } from "react";
-import { supabaseClient } from "../lib/supabaseClient.js";
+import { clienteSupabase } from "../lib/supabaseClient.js";
 
-function LoginPage({ onLogin }) {
-  const [emailAddress, setEmailAddress] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [loginErrorMessage, setLoginErrorMessage] = useState("");
+function PaginaLogin({ onLogin }) {
+  const [enderecoEmail, definirEnderecoEmail] = useState("");
+  const [senha, definirSenha] = useState("");
+  const [estaEntrando, definirEstaEntrando] = useState(false);
+  const [mensagemErroLogin, definirMensagemErroLogin] = useState("");
 
-  async function handleLoginFormSubmission(formSubmissionEvent) {
-    formSubmissionEvent.preventDefault();
-    setIsSigningIn(true);
-    setLoginErrorMessage("");
+  async function lidarComEnvioFormularioLogin(eventoEnvioFormulario) {
+    eventoEnvioFormulario.preventDefault();
+    definirEstaEntrando(true);
+    definirMensagemErroLogin("");
 
-    const { data: signInData, error: signInError } =
-      await supabaseClient.auth.signInWithPassword({
-        email: emailAddress.trim(),
-        password,
+    const { data: dadosEntrada, error: erroEntrada } =
+      await clienteSupabase.auth.signInWithPassword({
+        email: enderecoEmail.trim(),
+        password: senha,
       });
 
-    if (signInError) {
-      setLoginErrorMessage(signInError.message || "Não foi possível entrar.");
+    if (erroEntrada) {
+      definirMensagemErroLogin(erroEntrada.message || "Não foi possível entrar.");
     } else {
-      onLogin(signInData.session);
+      onLogin(dadosEntrada.session);
     }
-    setIsSigningIn(false);
+    definirEstaEntrando(false);
   }
 
   return (
@@ -31,14 +31,14 @@ function LoginPage({ onLogin }) {
       <section className="auth-panel" aria-labelledby="login-title">
         <p className="movie-kicker">TELOTECA</p>
         <h1 id="login-title">Entrar</h1>
-        <form className="auth-form" onSubmit={handleLoginFormSubmission}>
+        <form className="auth-form" onSubmit={lidarComEnvioFormularioLogin}>
           <label htmlFor="email">Email</label>
           <input
             id="email"
             type="email"
             autoComplete="email"
-            value={emailAddress}
-            onChange={(event) => setEmailAddress(event.target.value)}
+            value={enderecoEmail}
+            onChange={(evento) => definirEnderecoEmail(evento.target.value)}
             required
           />
           <label htmlFor="password">Senha</label>
@@ -46,17 +46,17 @@ function LoginPage({ onLogin }) {
             id="password"
             type="password"
             autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            value={senha}
+            onChange={(evento) => definirSenha(evento.target.value)}
             required
           />
-          <button type="submit" disabled={isSigningIn}>
-            {isSigningIn ? "Entrando..." : "Entrar"}
+          <button type="submit" disabled={estaEntrando}>
+            {estaEntrando ? "Entrando..." : "Entrar"}
           </button>
         </form>
-        {loginErrorMessage && (
+        {mensagemErroLogin && (
           <p className="search-message is-error" role="alert">
-            {loginErrorMessage}
+            {mensagemErroLogin}
           </p>
         )}
       </section>
@@ -64,4 +64,4 @@ function LoginPage({ onLogin }) {
   );
 }
 
-export default LoginPage;
+export default PaginaLogin;

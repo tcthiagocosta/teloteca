@@ -1,73 +1,73 @@
 import { useState } from "react";
-import Navbar from "../components/Navbar.jsx";
-import { TMDB_API_ACCESS_KEY } from "../config/tmdb.js";
+import BarraNavegacao from "../components/Navbar.jsx";
+import { CHAVE_ACESSO_API_TMDB } from "../config/tmdb.js";
 
-const TMDB_POSTER_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w342";
+const URL_BASE_IMAGEM_POSTER_TMDB = "https://image.tmdb.org/t/p/w342";
 
-function getTmdbResultDisplayTitle(tmdbSearchResult) {
-  return tmdbSearchResult.title || tmdbSearchResult.name || "Título não informado";
+function obterTituloExibicaoResultadoTmdb(resultadoBuscaTmdb) {
+  return resultadoBuscaTmdb.title || resultadoBuscaTmdb.name || "Título não informado";
 }
 
-function getTmdbResultReleaseYear(tmdbSearchResult) {
-  const titleReleaseDate =
-    tmdbSearchResult.release_date || tmdbSearchResult.first_air_date;
-  return titleReleaseDate ? titleReleaseDate.slice(0, 4) : "Ano não informado";
+function obterAnoLancamentoResultadoTmdb(resultadoBuscaTmdb) {
+  const dataLancamentoTitulo =
+    resultadoBuscaTmdb.release_date || resultadoBuscaTmdb.first_air_date;
+  return dataLancamentoTitulo ? dataLancamentoTitulo.slice(0, 4) : "Ano não informado";
 }
 
-function AddTitlePage() {
-  const [searchQueryText, setSearchQueryText] = useState("");
-  const [tmdbSearchResults, setTmdbSearchResults] = useState([]);
-  const [isSearchRequestInProgress, setIsSearchRequestInProgress] = useState(false);
-  const [searchErrorMessage, setSearchErrorMessage] = useState("");
+function PaginaAdicionarTitulo() {
+  const [textoConsulta, definirTextoConsulta] = useState("");
+  const [resultadosBuscaTmdb, definirResultadosBuscaTmdb] = useState([]);
+  const [estaRealizandoBusca, definirEstaRealizandoBusca] = useState(false);
+  const [mensagemErroBusca, definirMensagemErroBusca] = useState("");
 
-  async function handleTitleSearchFormSubmission(formSubmissionEvent) {
-    formSubmissionEvent.preventDefault();
-    if (!searchQueryText.trim()) {
-      setSearchErrorMessage("Digite um título para pesquisar.");
+  async function lidarComEnvioFormularioBuscaTitulo(eventoEnvioFormulario) {
+    eventoEnvioFormulario.preventDefault();
+    if (!textoConsulta.trim()) {
+      definirMensagemErroBusca("Digite um título para pesquisar.");
       return;
     }
 
-    if (TMDB_API_ACCESS_KEY === "COLE_SUA_CHAVE_DA_TMDB_AQUI") {
-      setSearchErrorMessage("Configure a chave da TMDB no arquivo src/config/tmdb.js.");
+    if (CHAVE_ACESSO_API_TMDB === "COLE_SUA_CHAVE_DA_TMDB_AQUI") {
+      definirMensagemErroBusca("Configure a chave da TMDB no arquivo src/config/tmdb.js.");
       return;
     }
 
-    setIsSearchRequestInProgress(true);
-    setSearchErrorMessage("");
+    definirEstaRealizandoBusca(true);
+    definirMensagemErroBusca("");
 
     try {
-      const tmdbSearchRequestParameters = new URLSearchParams({
-        api_key: TMDB_API_ACCESS_KEY,
+      const parametrosRequisicaoBuscaTmdb = new URLSearchParams({
+        api_key: CHAVE_ACESSO_API_TMDB,
         language: "pt-BR",
-        query: searchQueryText.trim(),
+        query: textoConsulta.trim(),
         include_adult: "false",
       });
-      const tmdbSearchResponse = await fetch(
-        `https://api.themoviedb.org/3/search/multi?${tmdbSearchRequestParameters}`,
+      const respostaBuscaTmdb = await fetch(
+        `https://api.themoviedb.org/3/search/multi?${parametrosRequisicaoBuscaTmdb}`,
       );
 
-      if (!tmdbSearchResponse.ok) throw new Error("Não foi possível consultar a TMDB.");
+      if (!respostaBuscaTmdb.ok) throw new Error("Não foi possível consultar a TMDB.");
 
-      const tmdbSearchResponseData = await tmdbSearchResponse.json();
-      console.log("TMDB search response:", tmdbSearchResponseData);
-      setTmdbSearchResults(
-        tmdbSearchResponseData.results.filter((tmdbSearchResult) =>
-          ["movie", "tv"].includes(tmdbSearchResult.media_type),
+      const dadosRespostaBuscaTmdb = await respostaBuscaTmdb.json();
+      console.log("TMDB search response:", dadosRespostaBuscaTmdb);
+      definirResultadosBuscaTmdb(
+        dadosRespostaBuscaTmdb.results.filter((resultadoBuscaTmdb) =>
+          ["movie", "tv"].includes(resultadoBuscaTmdb.media_type),
         ),
       );
-    } catch (tmdbSearchRequestError) {
-      setSearchErrorMessage(
-        tmdbSearchRequestError.message || "Ocorreu um erro ao realizar a consulta.",
+    } catch (erroRequisicaoBuscaTmdb) {
+      definirMensagemErroBusca(
+        erroRequisicaoBuscaTmdb.message || "Ocorreu um erro ao realizar a consulta.",
       );
-      setTmdbSearchResults([]);
+      definirResultadosBuscaTmdb([]);
     } finally {
-      setIsSearchRequestInProgress(false);
+      definirEstaRealizandoBusca(false);
     }
   }
 
   return (
     <div className="app-shell">
-      <Navbar />
+      <BarraNavegacao />
       <main className="add-title-page">
         <a className="back-link" href="#home">
           ← Voltar para a Home
@@ -79,49 +79,49 @@ function AddTitlePage() {
             Pesquise filmes ou séries para encontrar um novo título para sua
             coleção.
           </p>
-          <form className="title-search-form" onSubmit={handleTitleSearchFormSubmission}>
+          <form className="title-search-form" onSubmit={lidarComEnvioFormularioBuscaTitulo}>
             <input
               type="search"
-              value={searchQueryText}
-              onChange={(inputChangeEvent) => setSearchQueryText(inputChangeEvent.target.value)}
+              value={textoConsulta}
+              onChange={(eventoAlteracaoEntrada) => definirTextoConsulta(eventoAlteracaoEntrada.target.value)}
               placeholder="Ex.: Interestelar"
               aria-label="Título para pesquisar"
             />
-            <button type="submit" disabled={isSearchRequestInProgress}>
-              {isSearchRequestInProgress ? "Consultando..." : "Consultar"}
+            <button type="submit" disabled={estaRealizandoBusca}>
+              {estaRealizandoBusca ? "Consultando..." : "Consultar"}
             </button>
           </form>
-          {searchErrorMessage && (
+          {mensagemErroBusca && (
             <p className="search-message is-error" role="alert">
-              {searchErrorMessage}
+              {mensagemErroBusca}
             </p>
           )}
         </section>
 
-        {tmdbSearchResults.length > 0 && (
+        {resultadosBuscaTmdb.length > 0 && (
           <section className="tmdb-results" aria-label="Resultados da pesquisa">
             <h2>Resultados encontrados</h2>
             <div className="tmdb-results-grid">
-              {tmdbSearchResults.map((tmdbSearchResult) => (
+              {resultadosBuscaTmdb.map((resultadoBuscaTmdb) => (
                 <a
                   className="tmdb-result"
-                  href={`#tmdb/${tmdbSearchResult.media_type}/${tmdbSearchResult.id}`}
-                  key={`${tmdbSearchResult.media_type}-${tmdbSearchResult.id}`}
+                  href={`#tmdb/${resultadoBuscaTmdb.media_type}/${resultadoBuscaTmdb.id}`}
+                  key={`${resultadoBuscaTmdb.media_type}-${resultadoBuscaTmdb.id}`}
                 >
-                  {tmdbSearchResult.poster_path ? (
+                  {resultadoBuscaTmdb.poster_path ? (
                     <img
-                      src={`${TMDB_POSTER_IMAGE_BASE_URL}${tmdbSearchResult.poster_path}`}
-                      alt={`Pôster de ${getTmdbResultDisplayTitle(tmdbSearchResult)}`}
+                      src={`${URL_BASE_IMAGEM_POSTER_TMDB}${resultadoBuscaTmdb.poster_path}`}
+                      alt={`Pôster de ${obterTituloExibicaoResultadoTmdb(resultadoBuscaTmdb)}`}
                     />
                   ) : (
                     <div className="missing-poster">Sem pôster</div>
                   )}
                   <div>
                     <p>
-                      {tmdbSearchResult.media_type === "tv" ? "Série" : "Filme"} ·{" "}
-                      {getTmdbResultReleaseYear(tmdbSearchResult)}
+                      {resultadoBuscaTmdb.media_type === "tv" ? "Série" : "Filme"} ·{" "}
+                      {obterAnoLancamentoResultadoTmdb(resultadoBuscaTmdb)}
                     </p>
-                    <h3>{getTmdbResultDisplayTitle(tmdbSearchResult)}</h3>
+                    <h3>{obterTituloExibicaoResultadoTmdb(resultadoBuscaTmdb)}</h3>
                   </div>
                 </a>
               ))}
@@ -133,4 +133,4 @@ function AddTitlePage() {
   );
 }
 
-export default AddTitlePage;
+export default PaginaAdicionarTitulo;

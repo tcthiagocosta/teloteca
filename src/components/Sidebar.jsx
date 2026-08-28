@@ -1,4 +1,4 @@
-const navigationLinkDefinitions = [
+const definicoesLinksNavegacao = [
   ["Início", "⌂"],
   ["Descobrir", "⌁"],
   ["Em breve", "◷"],
@@ -7,7 +7,7 @@ const navigationLinkDefinitions = [
   ["Ajustes", "⚙"],
 ];
 
-function Sidebar({ isSidebarOpen, onSidebarClose }) {
+function BarraLateral({ isSidebarOpen, onSidebarClose }) {
   return (
     <>
       <div
@@ -17,15 +17,15 @@ function Sidebar({ isSidebarOpen, onSidebarClose }) {
       />
       <aside className={`sidebar ${isSidebarOpen ? "is-open" : ""}`}>
         <nav aria-label="Navegação principal">
-          {navigationLinkDefinitions.map(([linkLabel, linkIcon], linkIndex) => (
+          {definicoesLinksNavegacao.map(([rotuloLink, iconeLink], indiceLink) => (
             <a
-              key={linkLabel}
-              className={`sidebar-link ${linkIndex === 0 ? "is-active" : ""}`}
+              key={rotuloLink}
+              className={`sidebar-link ${indiceLink === 0 ? "is-active" : ""}`}
               href="#home"
               onClick={onSidebarClose}
             >
-              <span aria-hidden="true">{linkIcon}</span>
-              <em>{linkLabel}</em>
+              <span aria-hidden="true">{iconeLink}</span>
+              <em>{rotuloLink}</em>
             </a>
           ))}
         </nav>
@@ -33,4 +33,4 @@ function Sidebar({ isSidebarOpen, onSidebarClose }) {
     </>
   );
 }
-export default Sidebar;
+export default BarraLateral;
