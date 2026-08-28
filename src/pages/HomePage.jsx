@@ -6,16 +6,16 @@ import { seasonRepository } from "../repositories/seasonRepository.js";
 import { episodeRepository } from "../repositories/episodeRepository.js";
 
 function formatarDuracao(minutosTotais) {
-  const minutosPorMes = 30 * 24 * 60;
+  const minutosPorDia = 24 * 60;
   const minutosPorHora = 60;
-  const meses = Math.floor(minutosTotais / minutosPorMes);
-  const minutosRestantesDoMes = minutosTotais % minutosPorMes;
-  const horas = Math.floor(minutosRestantesDoMes / minutosPorHora);
-  const minutos = minutosRestantesDoMes % minutosPorHora;
+  const dias = Math.floor(minutosTotais / minutosPorDia);
+  const horas = Math.floor((minutosTotais % minutosPorDia) / minutosPorHora);
   const partesDuracao = [];
 
-  if (meses > 0) partesDuracao.push(`${meses} ${meses === 1 ? "mês" : "meses"}`);
-  partesDuracao.push(`${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")} horas`);
+  if (dias > 0) partesDuracao.push(`${dias} ${dias === 1 ? "dia" : "dias"}`);
+  if (horas > 0) partesDuracao.push(`${horas} ${horas === 1 ? "hora" : "horas"}`);
+
+  if (partesDuracao.length === 0) return "0 horas";
 
   return partesDuracao.join(" e ");
 }
