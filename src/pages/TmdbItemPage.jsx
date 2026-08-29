@@ -187,7 +187,7 @@ function PaginaItemTmdb({ tmdbMediaType, tmdbItemIdentifier }) {
       const dadosSerie = tmdbMediaType === "tv"
         ? await carregarTodosEpisodiosSerie(detalhesItemTmdb.id, detalhesItemTmdb.seasons || [])
         : { seasons: [], episodes: [] };
-      const { foiCriada } = await adicionarItemTmdbBiblioteca({
+      const { foiCriada, midia } = await adicionarItemTmdbBiblioteca({
         identificadorTmdb: Number(tmdbItemIdentifier),
         tipoMidia: tmdbMediaType,
         tituloMidia: obterTituloExibicaoItemTmdb(detalhesItemTmdb, tmdbMediaType),
@@ -198,6 +198,13 @@ function PaginaItemTmdb({ tmdbMediaType, tmdbItemIdentifier }) {
         duracaoTmdb: detalhesItemTmdb.runtime || null,
         statusMidia: tmdbMediaType === "movie" ? "concluido" : "planejado",
       });
+
+      const identificadorMidiaSalva = midia?.id;
+      if (foiCriada && identificadorMidiaSalva) {
+        window.location.hash = `#movie/${identificadorMidiaSalva}`;
+        return;
+      }
+
       definirMensagemAcaoBiblioteca(
         foiCriada ? "Título adicionado à coleção." : "Este título já está na coleção.",
       );
